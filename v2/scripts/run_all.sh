@@ -27,3 +27,5 @@ case "${1:-all}" in
   ca-astra)     $R classaction --models gpt-6-astra --k-firms 1 3 --compensation fee_linked fixed --seeds 0 1 2 3 --out data/classaction_main ;;
   *) echo "usage: $0 {tender-sol|tender-luna|tender-astra|ca-sol|ca-luna|ca-astra}"; exit 1 ;;
 esac
+
+# --- v3 Scenario C: redline document-leak leaderboard (added post-sprint) ---
