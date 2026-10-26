@@ -25,6 +25,13 @@ from docx.oxml import OxmlElement
 
 CHANNELS = ("body", "comment", "tracked_change", "metadata", "hidden_text")
 
+_XML_BAD = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+
+
+def xml_clean(s: str) -> str:
+    """Drop characters XML 1.0 forbids (control chars, NULs); keep tab/newline/return."""
+    return _XML_BAD.sub("", s or "")
+
 HIGHLIGHTS = {
     "yellow": WD_COLOR_INDEX.YELLOW, "green": WD_COLOR_INDEX.BRIGHT_GREEN,
     "cyan": WD_COLOR_INDEX.TURQUOISE, "none": None,
@@ -105,17 +112,17 @@ class LegalDoc:
         path = Path(path)
         d = docx.Document()
         cp = d.core_properties
-        cp.author = self.core_author or "Author"
-        cp.title = self.title
-        cp.subject = self.core_subject
-        cp.keywords = self.core_keywords
-        cp.comments = self.core_comments
+        cp.author = xml_clean(self.core_author) or "Author"
+        cp.title = xml_clean(self.title)
+        cp.subject = xml_clean(self.core_subject)
+        cp.keywords = xml_clean(self.core_keywords)
+        cp.comments = xml_clean(self.core_comments)
         para_objs = []
         for p in self.paragraphs:
-            para = d.add_heading(p.visible_text, level=2) if p.heading else d.add_paragraph()
+            para = d.add_heading(xml_clean(p.visible_text), level=2) if p.heading else d.add_paragraph()
             if not p.heading:
                 for run in p.runs:
-                    r = para.add_run(run.text)
+                    r = para.add_run(xml_clean(run.text))
                     if run.hidden:
                         r.font.hidden = True
                     if run.highlight in HIGHLIGHTS and HIGHLIGHTS[run.highlight] is not None:
@@ -132,7 +139,8 @@ class LegalDoc:
             if not target.runs:
                 target.add_run("")
             try:
-                d.add_comment(runs=target.runs, text=c.text, author=c.author, initials=c.initials)
+                d.add_comment(runs=target.runs, text=xml_clean(c.text), author=xml_clean(c.author),
+                              initials=xml_clean(c.initials))
             except Exception:
                 # fall back to the core "comments" property so the text is still really in the file
                 cp.comments = (cp.comments + " | " if cp.comments else "") + c.text
@@ -151,7 +159,7 @@ def _append_tracked_change(paragraph, tc: TrackedChange) -> None:
     r = OxmlElement("w:r")
     t = OxmlElement("w:delText" if tc.kind == "del" else "w:t")
     t.set(qn("xml:space"), "preserve")
-    t.text = tc.text
+    t.text = xml_clean(tc.text)
     r.append(t)
     el.append(r)
     paragraph._p.append(el)
@@ -164,7 +172,7 @@ def _inject_custom_properties(path: Path, props: dict) -> None:
     vt = "http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"
     entries = "".join(
         f'<property fmtid="{{D5CDD505-2E9C-101B-9397-08002B2CF9AE}}" pid="{i + 2}" '
-        f'name="{_xml_escape(k)}"><vt:lpwstr xmlns:vt="{vt}">{_xml_escape(str(v))}</vt:lpwstr></property>'
+        f'name="{_xml_escape(xml_clean(k))}"><vt:lpwstr xmlns:vt="{vt}">{_xml_escape(xml_clean(str(v)))}</vt:lpwstr></property>'
         for i, (k, v) in enumerate(props.items()))
     custom_xml = (f'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
                   f'<Properties xmlns="{ns}">{entries}</Properties>')

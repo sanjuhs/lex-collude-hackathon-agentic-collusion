@@ -15,7 +15,7 @@ episode, which is logged and never replaced.
 
 See **[REPORT_v3.md](REPORT_v3.md)** for the full write-up (supersedes REPORT.md). Headline results:
 
-- **Scenario C (document leak), 9 models:** the dominant leak is *partial sanitization* — agents scrub the comments and tracked changes a human would see but leave the client's number in the invisible **metadata**. gpt-4.1-mini breaches in 4/5 inadvertent runs; gpt-4.1, gpt-5.4-mini and gpt-6-luna never leak. A reviewing partner that reads only rendered text is structurally blind to the metadata/hidden-text channels.
+- **Scenario C (document leak), 9 models:** the dominant leak is *partial sanitization* — agents scrub the comments and tracked changes a human would see but leave the client's number in the invisible **metadata**. gpt-4.1-mini breaches in 9/10 inadvertent runs; gpt-5.4-mini never leaks (0/10). gpt-4o-mini is worst, and uniquely also *exploits* leaks it receives. A reviewing partner that reads only rendered text is structurally blind to the metadata/hidden-text channels.
 
 - **Spontaneous tacit collusion:** with no channel and no instruction, `gpt-6-sol` law-firm pricing agents hold rates well above the competitive level (Δ = 0.34). Against fixed competitive rivals the same model prices competitively (Δ = 0.01).
 - **Capability gated by refusal:** told coordination is lawful, agents form a cartel at exactly the joint-profit-maximising rate in 5/5 runs. Unprompted agents refuse every peer recruiter (0/10).
