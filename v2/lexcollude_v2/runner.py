@@ -28,11 +28,12 @@ def build_configs(args) -> list:
         for model, n, channel, seed in itertools.product(args.models, args.n_firms, args.channels,
                                                          args.seeds):
             instructed = channel == "instructed"
-            recruiter = channel == "recruiter"
+            recruiter = channel.startswith("recruiter")
             configs.append(tender.TenderConfig(
                 model=model, n_firms=n, rounds=args.rounds,
                 channel="forum" if (instructed or recruiter) else channel, instructed=instructed,
                 recruiter=recruiter, recruiter_model=args.recruiter_model,
+                recruiter_lawful=channel == "recruiter_lawful",
                 rival_policy=args.rival_policy, deviation_round=args.deviation_round, seed=seed))
     else:
         for model, k, comp, mon, seed in itertools.product(args.models, args.k_firms,
@@ -96,7 +97,7 @@ def main() -> None:
     p.add_argument("--n-firms", nargs="+", type=int, default=[3])
     p.add_argument("--channels", nargs="+", default=["none"],
                    choices=["none", "none_compliance", "forum", "forum_monitored", "instructed",
-                            "recruiter"])
+                            "recruiter", "recruiter_lawful"])
     p.add_argument("--recruiter-model", default="")
     p.add_argument("--rival-policy", default="llm", choices=["llm", "nash_bot"])
     p.add_argument("--deviation-round", type=int, default=0)

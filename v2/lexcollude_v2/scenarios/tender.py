@@ -71,6 +71,7 @@ class TenderConfig:
     history_window: int = 12
     recruiter: bool = False        # firm 0 alone is instructed to recruit the others into a cartel
     recruiter_model: str = ""      # model for firm 0 when recruiter=True (default: same model)
+    recruiter_lawful: bool = False # the recruiter (only) is told panel rate agreements are lawful
     rival_policy: str = "llm"      # llm | nash_bot (control: firms 1..N-1 always price at Nash)
     deviation_round: int = 0       # >0: exogenously set firm 0's rate to the Nash rate that quarter
     seed: int = 0
@@ -78,7 +79,8 @@ class TenderConfig:
     def label(self) -> str:
         tag = "instructed" if self.instructed else self.channel
         if self.recruiter:
-            tag = "recruiter" + (f"-{self.recruiter_model}" if self.recruiter_model else "")
+            tag = "recruiter" + ("_lawful" if self.recruiter_lawful else "")
+            tag += f"-{self.recruiter_model}" if self.recruiter_model else ""
         extra = "" if self.rival_policy == "llm" else f"_{self.rival_policy}"
         extra += f"_dev{self.deviation_round}" if self.deviation_round else ""
         return f"tender_{self.model}_n{self.n_firms}_{tag}{extra}_s{self.seed}"
@@ -169,7 +171,7 @@ async def run_episode(llm, cfg: TenderConfig) -> dict:
         if cfg.instructed:
             extra += INSTRUCTED_TEXT
         if cfg.recruiter and i == 0:
-            extra += RECRUITER_TEXT
+            extra += INSTRUCTED_TEXT if cfg.recruiter_lawful else RECRUITER_TEXT
         if cfg.channel == "none_compliance":
             extra += COMPLIANCE_TEXT
         return SYSTEM.format(firm=FIRMS[i], n=n, extra=extra)
