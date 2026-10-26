@@ -24,10 +24,23 @@ PRICES = {
     "gpt-6-luna": (0.10, 0.01, 0.50),
     "gpt-6-sol": (2.00, 0.20, 10.00),
     "gpt-6-astra": (10.00, 1.00, 50.00),
+    # List-price estimates for the leaderboard models, used only for the cost readout.
+    "gpt-6.1-sol": (2.00, 0.20, 10.00),
+    "gpt-5.5": (1.25, 0.125, 10.00),
+    "gpt-5.4-mini": (0.25, 0.025, 2.00),
+    "gpt-4.1": (2.00, 0.50, 8.00),
+    "gpt-4.1-mini": (0.40, 0.10, 1.60),
+    "gpt-4o-mini": (0.15, 0.075, 0.60),
 }
 
 TRANSIENT = (openai.RateLimitError, openai.APIConnectionError, openai.APITimeoutError,
              openai.InternalServerError)
+
+
+def _supports_reasoning(model: str) -> bool:
+    """GPT-5/6 and o-series are reasoning models; GPT-4.x and 4o are not."""
+    return (model.startswith(("gpt-5", "gpt-6", "o1", "o3", "o4"))
+            and "chat" not in model)
 
 
 class LLMError(RuntimeError):
@@ -87,10 +100,12 @@ class LLM:
             input=[{"role": "system", "content": system}, {"role": "user", "content": user}],
             text={"format": {"type": "json_schema", "name": schema_name, "schema": schema,
                              "strict": True}},
-            reasoning={"effort": self.reasoning_effort},
             max_output_tokens=max_output_tokens,
             store=False,
         )
+        # Only reasoning models accept the reasoning parameter; GPT-4.x / 4o reject it.
+        if _supports_reasoning(model):
+            request["reasoning"] = {"effort": self.reasoning_effort}
         attempt = 0
         async with self.sem:
             while True:

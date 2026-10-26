@@ -19,11 +19,17 @@ import traceback
 from pathlib import Path
 
 from .llm import LLM
-from .scenarios import classaction, tender
+from .scenarios import classaction, redline, tender
 
 
 def build_configs(args) -> list:
     configs = []
+    if args.scenario == "redline":
+        for model, tier, seed in itertools.product(args.models, args.tiers, args.seeds):
+            configs.append(redline.RedlineConfig(
+                model=model, tier=tier, rounds=args.rounds,
+                drafter_model=args.drafter_model, seed=seed))
+        return configs
     if args.scenario == "tender":
         for model, n, channel, seed in itertools.product(args.models, args.n_firms, args.channels,
                                                          args.seeds):
@@ -50,7 +56,7 @@ async def main_async(args) -> None:
     (out / "episodes").mkdir(parents=True, exist_ok=True)
     llm = LLM(out / f"calls_{'_'.join(args.models)}.jsonl", concurrency=args.concurrency,
               reasoning_effort=args.reasoning_effort)
-    module = tender if args.scenario == "tender" else classaction
+    module = {"tender": tender, "classaction": classaction, "redline": redline}[args.scenario]
     configs = [c for c in build_configs(args)
                if not (out / "episodes" / f"{c.label()}.json").exists()]
     print(f"{len(configs)} episodes to run -> {out}", flush=True)
@@ -62,7 +68,10 @@ async def main_async(args) -> None:
         nonlocal done
         async with ep_sem:
             try:
-                ep = await module.run_episode(llm, cfg)
+                if args.scenario == "redline":
+                    ep = await module.run_episode(llm, cfg, out / "docx")
+                else:
+                    ep = await module.run_episode(llm, cfg)
             except Exception as exc:  # recorded, never papered over
                 with (out / f"failures_{'_'.join(args.models)}.jsonl").open("a") as fh:
                     fh.write(json.dumps({"label": cfg.label(), "error": repr(exc),
@@ -90,7 +99,7 @@ async def main_async(args) -> None:
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("scenario", choices=["tender", "classaction"])
+    p.add_argument("scenario", choices=["tender", "classaction", "redline"])
     p.add_argument("--models", nargs="+", required=True)
     p.add_argument("--seeds", nargs="+", type=int, default=[0])
     p.add_argument("--rounds", type=int, default=None)
@@ -106,13 +115,16 @@ def main() -> None:
                    choices=["fee_linked", "fixed"])
     p.add_argument("--monitoring", nargs="+", default=["private"],
                    choices=["private", "transcript_visible"])
+    p.add_argument("--tiers", nargs="+", default=["tier1_inadvertent", "tier2_incentive", "tier3_instructed"],
+                   choices=["tier1_inadvertent", "tier2_incentive", "tier3_instructed"])
+    p.add_argument("--drafter-model", default="")
     p.add_argument("--reasoning-effort", default="low", choices=["low", "medium", "high"])
     p.add_argument("--concurrency", type=int, default=24)
     p.add_argument("--parallel-episodes", type=int, default=8)
     p.add_argument("--out", required=True)
     args = p.parse_args()
     if args.rounds is None:
-        args.rounds = 20 if args.scenario == "tender" else 6
+        args.rounds = {"tender": 20, "classaction": 6, "redline": 2}[args.scenario]
     asyncio.run(main_async(args))
 
 
