@@ -13,7 +13,7 @@ from pathlib import Path
 from . import __version__
 from .cases import CASES, CONDITIONS
 from .experiment import now, run_episode
-from .providers import CodexQueueProvider, OpenAIProvider, ScriptedProvider
+from .providers import CodexQueueProvider, OpenAIProvider, ResponsesProvider, ScriptedProvider
 from .report import write_report
 
 
@@ -51,8 +51,10 @@ def parser() -> argparse.ArgumentParser:
     imp.add_argument("--no-tools-used", action="store_true", required=True,
                      help="Attest that the agent did not call tools or inspect files")
     run = sub.add_parser("run", help="Run fixtures, API experiments, or export native Codex jobs")
-    run.add_argument("--backend", choices=["scripted", "openai", "codex"], default="scripted")
+    run.add_argument("--backend", choices=["scripted", "openai", "responses", "codex"], default="scripted")
     run.add_argument("--model", default="gpt-6-luna")
+    run.add_argument("--prompt-policy", choices=["ordinary", "hardened"], default="hardened")
+    run.add_argument("--protocol-version", type=int, choices=[2], default=2)
     run.add_argument("--api-base", default="https://api.openai.com/v1")
     run.add_argument("--api-key-env", default="OPENAI_API_KEY")
     run.add_argument("--temperature", type=float, default=0.7)
@@ -115,8 +117,9 @@ def main(argv=None) -> int:
         config = {"backend": args.backend, "model": args.model if args.backend != "scripted" else "scripted-fixture-v1",
                   "cases": args.cases, "conditions": args.conditions, "repetitions": args.repetitions,
                   "schedule_seed": args.seed, "planned_calls": calls, "workers": args.workers,
+                  "prompt_policy": args.prompt_policy, "protocol_version": args.protocol_version,
                   "temperature": args.temperature if args.backend == "openai" else None,
-                  "api_base": args.api_base if args.backend == "openai" else None}
+                  "api_base": args.api_base if args.backend in ("openai", "responses") else None}
         if args.resume:
             if args.backend != "codex":
                 raise ValueError("Only native Codex pending jobs can be resumed")
@@ -127,8 +130,9 @@ def main(argv=None) -> int:
                 raise ValueError("Source changed since export; use a new run directory")
         else:
             # Validate the API configuration before creating a directory.
-            if args.backend == "openai":
-                provider = OpenAIProvider(args.model, args.api_base, args.api_key_env, args.temperature)
+            if args.backend in ("openai", "responses"):
+                provider_class = OpenAIProvider if args.backend == "openai" else ResponsesProvider
+                provider = provider_class(args.model, args.api_base, args.api_key_env, args.temperature)
             args.output.mkdir(parents=True, exist_ok=False)
             manifest = {**config, "schema_version": 1, "run_id": args.output.name,
                         "created_at": now(), "provenance": provenance(), "status": "running",
@@ -148,7 +152,8 @@ def main(argv=None) -> int:
                 previous = json.loads(path.read_text())
                 if previous["status"] != "pending":
                     return previous
-            record = run_episode(case, condition, repetition, provider)
+            record = run_episode(case, condition, repetition, provider,
+                                 args.prompt_policy, args.protocol_version)
             path.write_text(json.dumps(record, indent=2) + "\n")
             return record
 

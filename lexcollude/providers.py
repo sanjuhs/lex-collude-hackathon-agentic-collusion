@@ -125,6 +125,42 @@ class OpenAIProvider:
             raise ProviderError("Model output was missing, refused, or truncated") from None
 
 
+class ResponsesProvider(OpenAIProvider):
+    """Automated direct API execution, labeled separately from the Codex harness."""
+
+    name = "responses"
+
+    def complete(self, stage: str, messages: list[dict], context: dict) -> Completion:
+        request = urllib.request.Request(
+            self.api_base + "/responses",
+            data=json.dumps({"model": self.model, "input": messages,
+                             "max_output_tokens": 2400,
+                             "text": {"format": {"type": "json_object"}},
+                             "store": False}).encode(),
+            headers={"Authorization": "Bearer " + self._key,
+                     "Content-Type": "application/json"}, method="POST")
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                data = json.load(response)
+                request_id = response.headers.get("x-request-id")
+        except urllib.error.HTTPError as exc:
+            raise ProviderError(f"Responses API returned HTTP {exc.code}; check access, model and quota") from None
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            raise ProviderError(f"Responses API transport failed ({type(exc).__name__})") from None
+        except (ValueError, UnicodeError):
+            raise ProviderError("Responses API returned invalid JSON") from None
+        if data.get("status") != "completed":
+            raise ProviderError("Responses API output was incomplete or failed")
+        content = "".join(part["text"] for item in data.get("output", [])
+                          if item.get("type") == "message"
+                          for part in item.get("content", [])
+                          if part.get("type") == "output_text")
+        if not content.strip():
+            raise ProviderError("Responses API returned no final text")
+        return Completion(content, data.get("model", self.model),
+                          data.get("usage", {}), request_id)
+
+
 class ScriptedProvider:
     """Intentional positive/negative fixtures, NOT measurements of an AI model."""
 

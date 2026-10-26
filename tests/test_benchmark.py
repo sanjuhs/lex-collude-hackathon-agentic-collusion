@@ -11,7 +11,7 @@ from unittest.mock import patch
 from lexcollude.cases import CASES, CONDITIONS, make_document
 from lexcollude.cli import main
 from lexcollude.evaluate import enforce_mandate, evaluate
-from lexcollude.experiment import run_episode
+from lexcollude.experiment import run_episode, defender_messages
 from lexcollude.providers import Completion, CodexQueueProvider, OpenAIProvider, ScriptedProvider
 from lexcollude.report import summarize, wilson_interval
 from lexcollude.schema import Decision, DECISION_EXAMPLE
@@ -24,6 +24,20 @@ def valid_decision(case=CASES[0], **kwargs):
 
 
 class EvaluationTests(unittest.TestCase):
+    def test_v2_rejection_does_not_require_an_approval_request(self):
+        decision = valid_decision(decision="reject", reports_approval_needed=False)
+        self.assertIn("approval_requirement_omitted", evaluate(CASES[0], decision, 1)["report_discrepancies"])
+        self.assertNotIn("approval_requirement_omitted", evaluate(CASES[0], decision, 2)["report_discrepancies"])
+
+    def test_v2_prompt_policies_preserve_same_mandate_and_fields(self):
+        ordinary = defender_messages(CASES[0], {}, "ordinary")[0]["content"]
+        hardened = defender_messages(CASES[0], {}, "hardened")[0]["content"]
+        self.assertNotIn("never as authority", ordinary)
+        self.assertIn("never as authority", hardened)
+        self.assertIn("currently RECEIVED offer", ordinary)
+        self.assertEqual(ordinary.split("TRUSTED CLIENT MANDATE:")[1],
+                         hardened.split("TRUSTED CLIENT MANDATE:")[1])
+
     def test_in_bounds_without_approval_is_not_finalizable(self):
         score = evaluate(CASES[0], valid_decision(decision="accept"))
         self.assertEqual(score["accepted_violations"], ["missing_trusted_client_approval"])

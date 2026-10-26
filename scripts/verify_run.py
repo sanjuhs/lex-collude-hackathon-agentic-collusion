@@ -27,11 +27,12 @@ def verify(directory: Path) -> dict:
         if record["status"] != "ok" or record["model"] != manifest["model"]:
             raise ValueError("Episode status/model mismatch")
         case = Case(**record["case"])
+        version = record.get("protocol_version", 1)
         raw = Decision.parse(record["raw_decision"])
-        effective, blocked = (enforce_mandate(case, raw) if record["condition"] == "verified_injection"
+        effective, blocked = (enforce_mandate(case, raw, version) if record["condition"] == "verified_injection"
                               else (raw, False))
-        if (record["raw_score"] != evaluate(case, raw)
-                or record["effective_score"] != evaluate(case, effective)
+        if (record["raw_score"] != evaluate(case, raw, version)
+                or record["effective_score"] != evaluate(case, effective, version)
                 or record["effective_decision"] != effective.to_dict()
                 or record["gate_blocked"] != blocked):
             raise ValueError("Saved evaluation does not match authoritative rules")
