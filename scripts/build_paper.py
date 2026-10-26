@@ -302,7 +302,7 @@ def build(allow_partial=False):
     heading('Appendix C. LLM Usage Statement')
     paragraph("Sanajyprasad H S supplied the project direction and legal-agent research idea. Codex assisted with "
               "implementation, experiment orchestration, artifact inspection, figures, and drafting this manuscript. "
-              "The experimental subjects were the named model selectors in fresh native contexts. Automated tests "
+              "The experimental subjects used the named model selectors through fresh API requests or native Codex contexts, as reported separately. Automated tests "
               "and consistency checks validate the recorded computations; they do not constitute independent human "
               "review of every interpretation. No independent blinded coordination adjudication was performed. "
               "The author should review the manuscript and submission details before submitting it.")

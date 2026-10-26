@@ -47,7 +47,7 @@ make serve
 
 `make reproduce` installs the pinned research extras, rebuilds charts from committed study data, produces Word/PDF using the official template, and builds the static explorer. `soffice` is required for PDF conversion. `make serve` runs the read-only explorer on port 8080. The browser never receives an API key and cannot start paid runs.
 
-The committed PDF and `site/index.html` can also be opened directly. The interactive explorer embeds its data, so it does not require a database, model endpoint, or JavaScript package installation.
+The PDF can be opened directly. For the downloaded explorer, unzip it and run `python start_explorer.py`; this uses only Python’s standard library. The browser opens automatically. The explorer embeds its data and needs no database, API key, or JavaScript package installation. Direct file URLs depend on browser policy; the managed cloud browser blocks them, so the local-server launcher is the tested route.
 
 ## Exit codes
 

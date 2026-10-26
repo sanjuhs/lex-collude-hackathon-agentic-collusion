@@ -68,7 +68,7 @@ make reproduce
 make serve
 ```
 
-Research extras are installed by `make reproduce`. PDF conversion needs LibreOffice's `soffice` executable; it is available in the prepared cloud environment. `make serve` runs the read-only explorer on port 8080. The browser never receives API credentials or starts paid experiments. You can also open `site/index.html` directly. A public hosted URL is not active: GitHub denied Pages enablement to this integration (HTTP 403). To publish, enable GitHub Actions under Settings → Pages, then run the included “Publish research explorer” workflow.
+Research extras are installed by `make reproduce`. PDF conversion needs LibreOffice's `soffice` executable; it is available in the prepared cloud environment. `make serve` runs the read-only explorer on port 8080. The browser never receives API credentials or starts paid experiments. The downloadable explorer includes `start_explorer.py`: unzip it and run `python start_explorer.py` to open the app locally. A public hosted URL is not active: GitHub denied Pages enablement to this integration (HTTP 403). To publish, enable GitHub Actions under Settings → Pages, then run the included “Publish research explorer” workflow.
 
 ## Experimental design
 
