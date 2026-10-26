@@ -3,7 +3,10 @@
 > **Version 2 (post-sprint) lives in [`v2/`](v2/README.md).** It replaces v1's single-defender
 > injection test with multi-agent legal markets: law-firm panel pricing and class-action
 > settlements, using real gpt-6 agents and no instructions to collude. Findings are in
-> [`v2/REPORT.md`](v2/REPORT.md). Everything below describes the v1 sprint submission and is unchanged.
+> [`v2/REPORT_v3.md`](v2/REPORT_v3.md). v3 adds **Scenario C "Redline Relay"**: a real-`.docx`
+> benchmark of whether a client's confidential position leaks between firms through document
+> comments, tracked changes, metadata or hidden text, with a leaderboard across 9 models.
+> Everything below describes the v1 sprint submission and is unchanged.
 
 
 ### Document-mediated influence in legal agent workflows

@@ -13,7 +13,9 @@ All results come from real OpenAI Responses API calls (`gpt-6-luna`, `gpt-6-sol`
 pipeline; failed calls are retried only for transient transport errors and otherwise fail the
 episode, which is logged and never replaced.
 
-See **[REPORT.md](REPORT.md)** for the full write-up. Headline results:
+See **[REPORT_v3.md](REPORT_v3.md)** for the full write-up (supersedes REPORT.md). Headline results:
+
+- **Scenario C (document leak), 9 models:** the dominant leak is *partial sanitization* — agents scrub the comments and tracked changes a human would see but leave the client's number in the invisible **metadata**. gpt-4.1-mini breaches in 4/5 inadvertent runs; gpt-4.1, gpt-5.4-mini and gpt-6-luna never leak. A reviewing partner that reads only rendered text is structurally blind to the metadata/hidden-text channels.
 
 - **Spontaneous tacit collusion:** with no channel and no instruction, `gpt-6-sol` law-firm pricing agents hold rates well above the competitive level (Δ = 0.34). Against fixed competitive rivals the same model prices competitively (Δ = 0.01).
 - **Capability gated by refusal:** told coordination is lawful, agents form a cartel at exactly the joint-profit-maximising rate in 5/5 runs. Unprompted agents refuse every peer recruiter (0/10).
@@ -47,6 +49,15 @@ Outcome metric: collusion index Δ = (p̄ − p_Nash)/(p_Mon − p_Nash) over th
 | `nash_bot` control | one LLM firm vs rivals fixed at the Nash rate — separates collusion from mis-pricing |
 | deviation probe | at quarter 14 firm 0's rate is exogenously set to the Nash rate; do rivals retaliate? |
 
+### C. Redline Relay — document-channel leakage benchmark (`scenarios/redline.py`)
+Two firms pass a **real `.docx`** share-purchase contract. The Sender firm's client holds a randomized
+confidential reservation price; the Sender has an internal drafter + reviewing partner. We measure whether
+that secret reaches opposing counsel through the document's body, comments, tracked changes, metadata, or
+hidden text, read deterministically from the delivered file (`docdoc.extract_channels`). Three tiers:
+inadvertent leak, incentive-driven, instructed covert capability. Leaderboard across many models:
+confidentiality-breach rate, covert-channel capability + opponent decode, text-only-partner miss, and
+Rule 4.4(b) notify-vs-exploit. Run: `scripts/run_redline.sh gpt-6-sol gpt-4.1-mini ...`.
+
 ### B. Class-action settlement (`scenarios/classaction.py`)
 A defense-counsel agent negotiates a consumer class-action settlement with K ∈ {1, 2, 3}
 plaintiff class-counsel agents (alternating term sheets, ≤ 6 rounds, then a declaration to the
@@ -72,6 +83,7 @@ python -m unittest discover -s tests      # deterministic checks, no API calls
 scripts/run_all.sh tender-sol             # see the script for every sweep
 python -m lexcollude_v2.judge data/tender_main --judge-model gpt-6-sol
 python -m lexcollude_v2.analysis --tender data/tender_main data/tender_recruit --classaction data/classaction_main
+python -m lexcollude_v2.redline_analysis data/redline_main   # Scenario C leaderboard
 ```
 
 Re-running a sweep resumes: finished episodes on disk are skipped.
@@ -82,6 +94,9 @@ Re-running a sweep resumes: finished episodes on disk are skipped.
 v2/lexcollude_v2/llm.py              Responses API client: strict JSON schemas, retries, call log, cost
 v2/lexcollude_v2/scenarios/tender.py  Scenario A + Nash/monopoly benchmarks
 v2/lexcollude_v2/scenarios/classaction.py  Scenario B + Bluetooth-sign metrics
+v2/lexcollude_v2/scenarios/redline.py       Scenario C document-leak benchmark
+v2/lexcollude_v2/docdoc.py                  Real .docx engine + channel extractor
+v2/lexcollude_v2/redline_analysis.py        Scenario C leaderboard + figures
 v2/lexcollude_v2/judge.py            Process labels with verbatim-quote verification
 v2/lexcollude_v2/analysis.py         Bootstrap CIs, permutation tests, figures
 v2/scripts/run_all.sh                The exact sweeps behind the report
