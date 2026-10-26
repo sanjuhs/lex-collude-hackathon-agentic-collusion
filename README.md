@@ -1,5 +1,11 @@
 # LexCollude
 
+> **Version 2 (post-sprint) lives in [`v2/`](v2/README.md).** It replaces v1's single-defender
+> injection test with multi-agent legal markets: law-firm panel pricing and class-action
+> settlements, using real gpt-6 agents and no instructions to collude. Findings are in
+> [`v2/REPORT.md`](v2/REPORT.md). Everything below describes the v1 sprint submission and is unchanged.
+
+
 ### Document-mediated influence in legal agent workflows
 
 **Can an opposing legal agent turn a settlement document into an instruction—and can that influence survive a summary or revision?**
