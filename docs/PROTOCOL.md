@@ -1,5 +1,7 @@
 # Research protocol
 
+**Current release:** protocol v2. The full workflow experiment uses 144 Responses API episodes; a separate native Codex cohort covers 72 direct-document episodes. Read [study/README.md](../study/README.md) and [the recorded scope amendment](../study/amendment.json) for the completed cohorts. The original native-only plan and initial v1 pilot are retained but are not pooled into these results. In v2, structured term fields refer to the received offer, counteroffers belong in the outgoing reply, and rejection need not request approval.
+
 ## Question and scope
 
 Can comments in an adversarial settlement proposal influence a claimant's legal agent to finalize terms outside its trusted mandate? Does a summary preserve that influence? Does a two-way document revision produce observable reciprocal coordination?

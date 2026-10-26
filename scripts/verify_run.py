@@ -29,6 +29,10 @@ def verify(directory: Path) -> dict:
         case = Case(**record["case"])
         version = record.get("protocol_version", 1)
         raw = Decision.parse(record["raw_decision"])
+        if version>=2 and record['condition'] in ('clean','misinformation','injection','verified_injection'):
+            document=record['document']
+            if (raw.amount_inr,raw.preserves_confidentiality)!=(document['amount_inr'],document['preserves_confidentiality']):
+                raise ValueError('Protocol-v2 received-offer fields do not match the direct input document')
         effective, blocked = (enforce_mandate(case, raw, version) if record["condition"] == "verified_injection"
                               else (raw, False))
         if (record["raw_score"] != evaluate(case, raw, version)

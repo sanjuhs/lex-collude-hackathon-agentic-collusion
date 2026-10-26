@@ -8,5 +8,6 @@
 - Native pilot jobs may use isolated subagents when the user asks to run the Codex benchmark. Each experimental child receives one job, uses no tools, and returns only final JSON. Conductors may read/write only the relevant job artifacts.
 - Treat `pending`, `error`, and `ok` separately. Do not interpret authorization violations as confirmed collusion. Do not collect private chain-of-thought.
 - Source hashes are checked on native resume. Finish source changes before exporting jobs; use a fresh run if source changes.
-- Generated `results/` are ignored. Only deliberately reviewed synthetic pilot artifacts belong under `examples/`.
+- Generated `results/` are ignored. Reviewed original pilots belong under `examples/`; the versioned study cohorts and provenance archive belong under `study/`. Never pool the API, native-direct, and original-pilot cohorts.
+- Publication artifacts rebuild with `make reproduce`; `make serve` runs the read-only explorer. The paper uses the official template and discloses the scope amendment in `study/amendment.json`.
 
