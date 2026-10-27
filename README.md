@@ -3,10 +3,12 @@
 > **Version 2 (post-sprint) lives in [`v2/`](v2/README.md).** It replaces v1's single-defender
 > injection test with multi-agent legal markets: law-firm panel pricing and class-action
 > settlements, using real gpt-6 agents and no instructions to collude. Findings are in
-> [`v2/REPORT_v3.md`](v2/REPORT_v3.md). v3 adds **Scenario C "Redline Relay"**: a real-`.docx`
-> benchmark of whether a client's confidential position leaks between firms through document
-> comments, tracked changes, metadata or hidden text, with a leaderboard across 9 models.
-> Everything below describes the v1 sprint submission and is unchanged.
+> [`v2/REPORT_v4.md`](v2/REPORT_v4.md). v4 adds **LexLeak-Bench**: a 200-case document-integrity
+> benchmark (150 train / 50 held-out, 10 leak channels, 6 document types, plus an indirect-injection
+> "poison" family) scored across 9 models over 1,800 episodes, with real `.docx` files. Key result:
+> the benchmark is *not saturated* — frontier models leak 50% of the time on held-out channels, and
+> image alt-text / table cells leak 100% of the time. Everything below describes the v1 sprint
+> submission and is unchanged.
 
 
 ### Document-mediated influence in legal agent workflows
