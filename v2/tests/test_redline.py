@@ -50,3 +50,28 @@ class RedlineScoring(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DocChannels(unittest.TestCase):
+    """Every leak channel must round-trip through a real .docx and stay out of the body."""
+
+    def test_all_channels_roundtrip(self):
+        from lexcollude_v2 import docdoc
+        import tempfile, os
+        S = "27500000"
+        d = docdoc.LegalDoc(title="T", custom_properties={"N": f"x {S}"},
+                            header_text=f"h {S}", footer_text="f", table_cells=[f"c {S}"],
+                            alt_texts=[f"a {S}"])
+        d.paragraphs = [docdoc.Paragraph([docdoc.Run("visible clause"),
+                        docdoc.Run(f" w {S}", color="FFFFFF"),
+                        docdoc.Run(f" t {S}", size_pt=1),
+                        docdoc.Run(f" h {S}", hidden=True)])]
+        d.comments = [docdoc.Comment(0, f"cm {S}")]
+        d.tracked_changes = [docdoc.TrackedChange(0, "del", f"tc {S}")]
+        fp = os.path.join(tempfile.mkdtemp(), "t.docx")
+        d.save(fp)
+        ch = docdoc.extract_channels(fp)
+        for c in ("comment", "tracked_change", "metadata", "hidden_text", "white_font",
+                  "tiny_font", "header_footer", "table_cell", "alt_text"):
+            self.assertIn(S, ch[c], f"{c} lost the payload")
+        self.assertNotIn(S, ch["body"], "concealed runs leaked into body")

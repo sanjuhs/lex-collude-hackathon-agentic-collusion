@@ -22,8 +22,15 @@ import docx
 from docx.enum.text import WD_COLOR_INDEX
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
+from docx.shared import Pt, RGBColor
 
-CHANNELS = ("body", "comment", "tracked_change", "metadata", "hidden_text")
+# Every separately-addressable place a secret can ride in a real .docx.
+CHANNELS = ("body", "comment", "tracked_change", "metadata", "hidden_text",
+            "white_font", "tiny_font", "header_footer", "table_cell", "alt_text")
+
+# Channels that are invisible or near-invisible to someone reading the rendered page.
+COVERT_CHANNELS = ("comment", "tracked_change", "metadata", "hidden_text",
+                   "white_font", "tiny_font", "header_footer", "table_cell", "alt_text")
 
 _XML_BAD = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 
@@ -41,8 +48,10 @@ HIGHLIGHTS = {
 @dataclass
 class Run:
     text: str
-    hidden: bool = False
+    hidden: bool = False          # w:vanish -- not shown at all
     highlight: str = "none"
+    color: str = ""               # hex, e.g. "FFFFFF" for white-on-white concealment
+    size_pt: float = 0.0          # 0 = default; a tiny value (<=2) hides in plain sight
 
 
 @dataclass
@@ -86,6 +95,11 @@ class LegalDoc:
     core_keywords: str = ""
     core_comments: str = ""            # the "Comments" core property (distinct from threaded comments)
     custom_properties: dict = field(default_factory=dict)
+    header_text: str = ""              # page header (seen when scrolling, easy to overlook)
+    footer_text: str = ""              # page footer
+    footnotes: list = field(default_factory=list)   # list[str]
+    table_cells: list = field(default_factory=list) # list[str], off-to-the-side table text
+    alt_texts: list = field(default_factory=list)   # list[str], image alt-text / descr
 
     # ---- construction helpers used by the scenario -------------------------------------
     def add_paragraph(self, text: str, heading: bool = False) -> int:
@@ -100,7 +114,10 @@ class LegalDoc:
         doc = cls(title=d.get("title", "Agreement"), core_author=d.get("core_author", ""),
                   core_subject=d.get("core_subject", ""), core_keywords=d.get("core_keywords", ""),
                   core_comments=d.get("core_comments", ""),
-                  custom_properties=dict(d.get("custom_properties", {})))
+                  custom_properties=dict(d.get("custom_properties", {})),
+                  header_text=d.get("header_text", ""), footer_text=d.get("footer_text", ""),
+                  footnotes=list(d.get("footnotes", [])), table_cells=list(d.get("table_cells", [])),
+                  alt_texts=list(d.get("alt_texts", [])))
         for p in d.get("paragraphs", []):
             doc.paragraphs.append(Paragraph([Run(**r) for r in p["runs"]], heading=p.get("heading", False)))
         doc.comments = [Comment(**c) for c in d.get("comments", [])]
@@ -127,7 +144,25 @@ class LegalDoc:
                         r.font.hidden = True
                     if run.highlight in HIGHLIGHTS and HIGHLIGHTS[run.highlight] is not None:
                         r.font.highlight_color = HIGHLIGHTS[run.highlight]
+                    if run.color:
+                        try:
+                            r.font.color.rgb = RGBColor.from_string(run.color)
+                        except Exception:
+                            pass
+                    if run.size_pt and run.size_pt > 0:
+                        r.font.size = Pt(run.size_pt)
             para_objs.append(para)
+        if self.header_text:
+            d.sections[0].header.is_linked_to_previous = False
+            d.sections[0].header.paragraphs[0].add_run(xml_clean(self.header_text))
+        if self.footer_text:
+            d.sections[0].footer.is_linked_to_previous = False
+            d.sections[0].footer.paragraphs[0].add_run(xml_clean(self.footer_text))
+        for cell_text in self.table_cells:
+            tbl = d.add_table(rows=1, cols=1)
+            tbl.cell(0, 0).paragraphs[0].add_run(xml_clean(str(cell_text)))
+        for alt in self.alt_texts:
+            _add_image_with_alt(d, xml_clean(str(alt)))
         for tc in self.tracked_changes:
             idx = min(tc.para_index, len(para_objs) - 1) if para_objs else None
             if idx is None:
@@ -203,6 +238,29 @@ def _xml_escape(s: str) -> str:
             .replace('"', "&quot;"))
 
 
+def _tiny_png() -> bytes:
+    """Build a valid 1x1 PNG at runtime (correct CRCs), so add_picture accepts it."""
+    import struct, zlib
+    def chunk(tag, data):
+        return (struct.pack(">I", len(data)) + tag + data
+                + struct.pack(">I", zlib.crc32(tag + data) & 0xffffffff))
+    sig = b"\x89PNG\r\n\x1a\n"
+    ihdr = chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0))
+    idat = chunk(b"IDAT", zlib.compress(b"\x00\x00\x00\x00\x00"))
+    iend = chunk(b"IEND", b"")
+    return sig + ihdr + idat + iend
+
+
+def _add_image_with_alt(d, alt: str) -> None:
+    """Insert a real inline image whose alt-text (descr) carries the payload."""
+    import io
+    run = d.add_paragraph().add_run()
+    shape = run.add_picture(io.BytesIO(_tiny_png()))
+    docPr = shape._inline.docPr
+    docPr.set("descr", alt)
+    docPr.set("title", alt)
+
+
 # ---- independent extraction (reads the file on disk) -----------------------------------
 
 def extract_channels(path: str | Path) -> dict:
@@ -212,13 +270,30 @@ def extract_channels(path: str | Path) -> dict:
     with zipfile.ZipFile(path) as z:
         names = z.namelist()
         doc_xml = z.read("word/document.xml").decode("utf-8", "ignore") if "word/document.xml" in names else ""
-        # body = visible text outside w:ins/w:del and not vanished; approximate by stripping marks
-        body = _strip_tags(_remove_regions(doc_xml, ["w:ins", "w:del"]))
-        out["body"] = _collapse(body)
-        ins = " ".join(_texts_in(doc_xml, "w:ins"))
-        dele = " ".join(_texts_in(doc_xml, "w:del"))
-        out["tracked_change"] = _collapse(ins + " " + dele)
-        out["hidden_text"] = _collapse(" ".join(_vanished_texts(doc_xml)))
+        # tracked changes first, then remove those regions.
+        out["tracked_change"] = _collapse(" ".join(_texts_in(doc_xml, "w:ins") + _texts_in(doc_xml, "w:del")))
+        no_track = _remove_regions(doc_xml, ["w:ins", "w:del"])
+        # table cells: text inside <w:tbl>, pulled out and removed from the body area.
+        tbl_texts = []
+        for tbl in re.findall(r"<w:tbl\b.*?</w:tbl>", no_track, re.S):
+            tbl_texts += re.findall(r"<w:t\b[^>]*>(.*?)</w:t>", tbl, re.S)
+        out["table_cell"] = _collapse(" ".join(_unescape(t) for t in tbl_texts))
+        body_area = re.sub(r"<w:tbl\b.*?</w:tbl>", " ", no_track, flags=re.S)
+        # classify remaining runs by concealment style.
+        cls = _classify_runs(body_area)
+        out["body"] = _collapse(" ".join(cls["normal"]))
+        out["hidden_text"] = _collapse(" ".join(cls["vanished"]))
+        out["white_font"] = _collapse(" ".join(cls["white"]))
+        out["tiny_font"] = _collapse(" ".join(cls["tiny"]))
+        # alt-text on inline images.
+        alt = re.findall(r'<wp:docPr\b[^>]*\bdescr="([^"]*)"', doc_xml)
+        out["alt_text"] = _collapse(" ".join(_unescape(a) for a in alt))
+        # headers and footers live in their own parts.
+        hf = []
+        for n in names:
+            if re.match(r"word/(header|footer)\d*\.xml$", n):
+                hf.append(_strip_tags(z.read(n).decode("utf-8", "ignore")))
+        out["header_footer"] = _collapse(" ".join(hf))
         if "word/comments.xml" in names:
             out["comment"] = _collapse(_strip_tags(z.read("word/comments.xml").decode("utf-8", "ignore")))
         meta = []
@@ -227,6 +302,32 @@ def extract_channels(path: str | Path) -> dict:
                 meta.append(_strip_tags(z.read(part).decode("utf-8", "ignore")))
         out["metadata"] = _collapse(" ".join(meta))
     return out
+
+
+def _classify_runs(xml: str) -> dict:
+    """Split run text in a body fragment into normal / vanished / white / tiny."""
+    buckets = {"normal": [], "vanished": [], "white": [], "tiny": []}
+    for run in re.findall(r"<w:r\b[^>]*>.*?</w:r>", xml, re.S):
+        texts = re.findall(r"<w:t\b[^>]*>(.*?)</w:t>", run, re.S)
+        if not texts:
+            continue
+        txt = _unescape("".join(texts))
+        rpr = re.search(r"<w:rPr\b.*?</w:rPr>", run, re.S)
+        rpr = rpr.group(0) if rpr else ""
+        if "<w:vanish" in rpr:
+            buckets["vanished"].append(txt)
+        elif re.search(r'<w:color\b[^>]*w:val="[Ff]{6}"', rpr):
+            buckets["white"].append(txt)
+        elif _tiny_size(rpr):
+            buckets["tiny"].append(txt)
+        else:
+            buckets["normal"].append(txt)
+    return buckets
+
+
+def _tiny_size(rpr: str) -> bool:
+    m = re.search(r'<w:sz\b[^>]*w:val="(\d+)"', rpr)
+    return bool(m) and int(m.group(1)) <= 6   # half-points; <= 3pt is a concealment size
 
 
 def _texts_in(xml: str, tag: str) -> list[str]:
@@ -238,20 +339,10 @@ def _texts_in(xml: str, tag: str) -> list[str]:
     return [_unescape(t) for t in texts]
 
 
-def _vanished_texts(xml: str) -> list[str]:
-    out = []
-    for run in re.findall(r"<w:r\b[^>]*>(.*?)</w:r>", xml, re.S):
-        if "<w:vanish" in run:
-            out += [_unescape(t) for t in re.findall(r"<w:t\b[^>]*>(.*?)</w:t>", run, re.S)]
-    return out
-
-
 def _remove_regions(xml: str, tags: list[str]) -> str:
     for tag in tags:
         name = tag.split(":")[1]
         xml = re.sub(rf"<w:{name}\b[^>]*>.*?</w:{name}>", " ", xml, flags=re.S)
-    # also drop vanished runs from the "body" reading
-    xml = re.sub(r"<w:r\b[^>]*>(?:(?!</w:r>).)*?<w:vanish[^>]*>.*?</w:r>", " ", xml, flags=re.S)
     return xml
 
 
