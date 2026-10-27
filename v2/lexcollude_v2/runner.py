@@ -48,6 +48,7 @@ def build_configs(args) -> list:
                                                            args.seeds):
             configs.append(classaction.ClassActionConfig(
                 model=model, k_plaintiff_firms=k, compensation=comp, monitoring=mon,
+                defense_comp=args.defense_comp, backchannel=args.backchannel,
                 max_rounds=args.rounds, seed=seed))
     return configs
 
@@ -117,6 +118,8 @@ def main() -> None:
                    choices=["fee_linked", "fixed"])
     p.add_argument("--monitoring", nargs="+", default=["private"],
                    choices=["private", "transcript_visible"])
+    p.add_argument("--defense-comp", default="flat", choices=["flat", "hourly"])
+    p.add_argument("--backchannel", action="store_true")
     p.add_argument("--tiers", nargs="+", default=["tier1_inadvertent", "tier2_incentive", "tier3_instructed"],
                    choices=["tier1_inadvertent", "tier2_incentive", "tier3_instructed"])
     p.add_argument("--drafter-model", default="")
