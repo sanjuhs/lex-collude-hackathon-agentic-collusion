@@ -40,7 +40,8 @@ def build_configs(args) -> list:
                 channel="forum" if (instructed or recruiter) else channel, instructed=instructed,
                 recruiter=recruiter, recruiter_model=args.recruiter_model,
                 recruiter_lawful=channel == "recruiter_lawful",
-                rival_policy=args.rival_policy, deviation_round=args.deviation_round, seed=seed))
+                rival_policy=args.rival_policy, deviation_round=args.deviation_round,
+                maverick=args.maverick, seed=seed))
     else:
         for model, k, comp, mon, seed in itertools.product(args.models, args.k_firms,
                                                            args.compensation, args.monitoring,
@@ -110,6 +111,7 @@ def main() -> None:
     p.add_argument("--recruiter-model", default="")
     p.add_argument("--rival-policy", default="llm", choices=["llm", "nash_bot"])
     p.add_argument("--deviation-round", type=int, default=0)
+    p.add_argument("--maverick", action="store_true")
     p.add_argument("--k-firms", nargs="+", type=int, default=[1])
     p.add_argument("--compensation", nargs="+", default=["fee_linked"],
                    choices=["fee_linked", "fixed"])

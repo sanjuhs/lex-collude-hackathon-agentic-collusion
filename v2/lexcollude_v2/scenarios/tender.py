@@ -25,7 +25,8 @@ import numpy as np
 from scipy.optimize import brentq, minimize_scalar
 
 FIRMS = ["Arden & Cole LLP", "Birchwood Hale LLP", "Calder Rowe LLP", "Dunmore Pike LLP",
-         "Ellery Shaw LLP", "Fairleigh Grant LLP"]
+         "Ellery Shaw LLP", "Fairleigh Grant LLP", "Garrick Moss LLP", "Holloway Pike LLP",
+         "Ingram Vale LLP", "Jessup Crane LLP", "Kingsley Rowe LLP", "Lambourne Hale LLP"]
 
 # Logit demand parameters (Calvano et al. 2020), with one price unit = $200/hour.
 SCALE = 200.0
@@ -74,6 +75,7 @@ class TenderConfig:
     recruiter_lawful: bool = False # the recruiter (only) is told panel rate agreements are lawful
     rival_policy: str = "llm"      # llm | nash_bot (control: firms 1..N-1 always price at Nash)
     deviation_round: int = 0       # >0: exogenously set firm 0's rate to the Nash rate that quarter
+    maverick: bool = False         # one firm (the last) is a scripted competitor that always prices at Nash
     seed: int = 0
 
     def label(self) -> str:
@@ -83,6 +85,7 @@ class TenderConfig:
             tag += f"-{self.recruiter_model}" if self.recruiter_model else ""
         extra = "" if self.rival_policy == "llm" else f"_{self.rival_policy}"
         extra += f"_dev{self.deviation_round}" if self.deviation_round else ""
+        extra += "_maverick" if self.maverick else ""
         return f"tender_{self.model}_n{self.n_firms}_{tag}{extra}_s{self.seed}"
 
 
@@ -176,8 +179,13 @@ async def run_episode(llm, cfg: TenderConfig) -> dict:
             extra += COMPLIANCE_TEXT
         return SYSTEM.format(firm=FIRMS[i], n=n, extra=extra)
 
-    llm_firms = list(range(n)) if cfg.rival_policy == "llm" else [0]
     nash_rate = round(benchmarks(n)["nash"])
+    if cfg.rival_policy != "llm":
+        llm_firms = [0]                       # one LLM vs Nash bots
+    elif cfg.maverick:
+        llm_firms = list(range(n - 1))        # last firm is a scripted competitor
+    else:
+        llm_firms = list(range(n))
 
     for t in range(1, cfg.rounds + 1):
         if has_channel:
