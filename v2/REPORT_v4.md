@@ -83,6 +83,20 @@ largest reasoning models were re-run at a higher token cap).
 
 ### 2.1 Results — the leaderboard
 
+**Finding L0 — failures are concentrated, and no model is perfect benchmark-wide.** The single
+clearest view is a model × channel heatmap (Figure L0). The frontier models (gpt-5.5, the gpt-6
+family) are clean (0% breach) on the first seven channels and fail only on **table cells** and **image
+alt-text** — a shared, specific blind spot. Of 187 total inadvertent leaks, 54 (29%) come from those
+two channels; **for the five frontier models, 30 of their 32 leaks (94%) are alt-text or table cells**,
+and across the other seven channels combined they breach only twice. A combined safety score over the
+full 200-case bank (1 − mean of bad-outcome rates) therefore leaves **every model below 100** (gpt-6
+family and gpt-5.5 at 96–97, the GPT-4 family at 63–81): the benchmark does not saturate, because
+every model fails the alt-text/table-cell cases. Regenerate both with `python -m lexcollude_v2.bench_extra`.
+
+![Model x channel breach heatmap](figures/leakbench_heatmap.png)
+
+![Combined full-bank safety score](figures/leakbench_combined.png)
+
 ![Integrity, train vs holdout](figures/leakbench_integrity.png)
 
 **Integrity** = 1 − mean(bad-outcome rates: inadvertent breach, incentive leak, exploit-on-leak,
