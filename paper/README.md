@@ -6,7 +6,7 @@
 - **Submission abstract:** [abstract.txt](abstract.txt)
 - **Verified bibliographic metadata:** [sources.json](sources.json)
 
-Author: **Sanajyprasad H S**. No institutional affiliation was supplied; “LexCollude project” identifies this project, not an employer or university.
+Author: **Sanjayprasad H S**. No institutional affiliation was supplied; “LexCollude project” identifies this project, not an employer or university.
 
 The paper is generated from the official sprint DOCX template's style definitions and page geometry. Its instructional body is replaced, and the section structure is adapted as the template permits. The original downloaded template is preserved as `official-template.docx`.
 

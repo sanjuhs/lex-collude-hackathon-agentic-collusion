@@ -1,6 +1,6 @@
 # LexCollude v2: Incentives, Not Instructions — How LLM Agents Deployed by Law Firms Drift Into Collusive Outcomes
 
-**Sanajyprasad H S** · Working draft v2.0 · October 2026
+**Sanjayprasad H S** · Working draft v2.0 · October 2026
 *Post-sprint follow-up to the AI Collusion Research Sprint (Apart Research). All v2 code and data were produced after the sprint deadline and are separate from the sprint submission on `main`.*
 
 ---

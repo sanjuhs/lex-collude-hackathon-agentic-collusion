@@ -1,6 +1,6 @@
 # LexCollude v3 — Collusion and Confidentiality Leakage Between Law-Firm AI Agents
 
-**Sanajyprasad H S** · Working draft v3.0 · October 2026
+**Sanjayprasad H S** · Working draft v3.0 · October 2026
 *Post-sprint continuation of the Apart Research AI Collusion Research Sprint. All v2/v3 code and
 data were produced after the sprint deadline and are separate from the sprint submission on `main`.
 This report supersedes `REPORT.md`, which covered Scenarios A and B only.*

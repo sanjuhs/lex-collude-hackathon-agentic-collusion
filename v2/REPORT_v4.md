@@ -1,6 +1,6 @@
 # LexCollude v4 — A Benchmark for Collusion and Confidential-Information Leakage Between Law-Firm AI Agents
 
-**Sanajyprasad H S** · Working draft v4.0 · October 2026
+**Sanjayprasad H S** · Working draft v4.0 · October 2026
 *Post-sprint continuation of the Apart Research AI Collusion Research Sprint. All v2–v4 code and
 data were produced after the sprint deadline and are separate from the sprint submission on `main`.
 This report supersedes `REPORT_v3.md`; it keeps the pricing and settlement studies and adds the main

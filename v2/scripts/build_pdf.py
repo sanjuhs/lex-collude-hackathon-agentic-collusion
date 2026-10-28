@@ -64,7 +64,7 @@ li {{ margin: 2pt 0; }}
 </style></head><body>
 
 <h1>LexLeak-Bench: Measuring Confidential-Information Leakage and Collusion<br>Between Law-Firm AI Agents</h1>
-<div class="authors">Sanajyprasad H S</div>
+<div class="authors">Sanjayprasad H S</div>
 <div class="sub">Working paper v4.0 · October 2026 · Prepared in the context of the Apart Research AI Collusion Research Sprint</div>
 <div class="sub">All experiments use real OpenAI model calls. Code &amp; data: <code>github.com/sanjuhs/lex-collude-hackathon-agentic-collusion</code> (branch <code>v2-multiagent-collusion</code>)</div>
 

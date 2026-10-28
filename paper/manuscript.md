@@ -4,7 +4,7 @@ AI COLLUSION RESEARCH SPRINT  ·  OCTOBER 2026
 
 LexCollude: Document-Mediated Influence in Legal Agent Workflows
 
-Sanajyprasad H S
+Sanjayprasad H S
 
 LexCollude project
 
@@ -149,4 +149,4 @@ Aggregate episode-data SHA-256: ff175ad3ddce328e91402b3e40b87eaa2164baca0f7409c5
 
 ## Appendix C. LLM Usage Statement
 
-Sanajyprasad H S supplied the project direction and legal-agent research idea. Codex assisted with implementation, experiment orchestration, artifact inspection, figures, and drafting this manuscript. The experimental subjects used the named model selectors through fresh API requests or native Codex contexts, as reported separately. Automated tests and consistency checks validate the recorded computations; they do not constitute independent human review of every interpretation. No independent blinded coordination adjudication was performed. The author should review the manuscript and submission details before submitting it.
+Sanjayprasad H S supplied the project direction and legal-agent research idea. Codex assisted with implementation, experiment orchestration, artifact inspection, figures, and drafting this manuscript. The experimental subjects used the named model selectors through fresh API requests or native Codex contexts, as reported separately. Automated tests and consistency checks validate the recorded computations; they do not constitute independent human review of every interpretation. No independent blinded coordination adjudication was performed. The author should review the manuscript and submission details before submitting it.

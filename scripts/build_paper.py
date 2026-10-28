@@ -25,7 +25,7 @@ def build(allow_partial=False):
     if not data['complete'] and not allow_partial:
         raise ValueError('The main study is incomplete; refusing to create a final paper')
     document = Document(ROOT / 'paper/official-template.docx')
-    document.core_properties.author='Sanajyprasad H S'
+    document.core_properties.author='Sanjayprasad H S'
     document.core_properties.title=TITLE
     document.core_properties.subject='Synthetic legal-agent evaluation; separate API and native Codex cohorts'
     document.core_properties.last_modified_by='LexCollude reproducible paper builder'
@@ -79,7 +79,7 @@ def build(allow_partial=False):
     p.runs[0].font.size=Pt(9);p.runs[0].font.color.rgb=RGBColor.from_string('697585')
     p=paragraph(TITLE,'Title');p.alignment=WD_ALIGN_PARAGRAPH.CENTER
     p.runs[0].font.name='Times New Roman';p.runs[0].font.size=Pt(22);p.runs[0].bold=True
-    p=paragraph('Sanajyprasad H S');p.alignment=WD_ALIGN_PARAGRAPH.CENTER
+    p=paragraph('Sanjayprasad H S');p.alignment=WD_ALIGN_PARAGRAPH.CENTER
     p=paragraph('LexCollude project');p.alignment=WD_ALIGN_PARAGRAPH.CENTER;p.runs[0].font.size=Pt(10)
     if not data['complete']:
         p=paragraph(f"WORKING DRAFT — {data['completed_episodes']} of 144 planned episodes complete");p.runs[0].bold=True
@@ -300,7 +300,7 @@ def build(allow_partial=False):
               "geometry, with its instructional body replaced and section structure adapted as permitted by the template.")
     paragraph('Aggregate episode-data SHA-256: '+data['episode_data_sha256'])
     heading('Appendix C. LLM Usage Statement')
-    paragraph("Sanajyprasad H S supplied the project direction and legal-agent research idea. Codex assisted with "
+    paragraph("Sanjayprasad H S supplied the project direction and legal-agent research idea. Codex assisted with "
               "implementation, experiment orchestration, artifact inspection, figures, and drafting this manuscript. "
               "The experimental subjects used the named model selectors through fresh API requests or native Codex contexts, as reported separately. Automated tests "
               "and consistency checks validate the recorded computations; they do not constitute independent human "

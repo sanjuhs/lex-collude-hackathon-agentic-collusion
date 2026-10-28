@@ -21,7 +21,7 @@
 
 LexCollude is a working research benchmark with fictional client mandates, eight controlled workflows, deterministic outcome checks, exact observable traces, and a read-only evidence explorer. It separates unauthorized acceptance, document influence, and candidate coordination. **An error or an opponent's malicious proposal is not automatically collusion.**
 
-Author: **Sanajyprasad H S** · Prepared for the AI Collusion Research Sprint, October 2026.
+Author: **Sanjayprasad H S** · Prepared for the AI Collusion Research Sprint, October 2026.
 
 ## Start with the deliverables
 
